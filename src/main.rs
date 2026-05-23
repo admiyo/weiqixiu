@@ -8,16 +8,16 @@ use iced::{
 };
 
 fn main() -> iced::Result {
-    iced::run( MyApp::update, MyApp::view)
+    iced::run( WeiQiXiu::update, WeiQiXiu::view)
 }
 
 #[derive(Clone, Debug)]
 enum Message {}
 
 #[derive(Default)]
-struct MyApp;
+struct WeiQiXiu;
 
-impl MyApp {
+impl WeiQiXiu{
     fn update(&mut self, _message: Message) {}
 
     fn view(&self) -> iced::Element<'_, Message> {
