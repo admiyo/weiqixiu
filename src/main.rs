@@ -20,7 +20,7 @@ struct MyApp;
 impl MyApp {
     fn update(&mut self, _message: Message) {}
 
-    fn view(&self) -> iced::Element<Message> {
+    fn view(&self) -> iced::Element<'_, Message> {
         column![
             "A Canvas",
             Canvas::new(MyProgram)
