@@ -22,7 +22,7 @@ impl WeiQiXiu{
 
     fn view(&self) -> iced::Element<'_, Message> {
         column![
-            "A Canvas",
+            "围戏锈",
             Canvas::new(MyProgram)
                 .width(Length::Fill)
                 .height(Length::Fill)
