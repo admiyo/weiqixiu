@@ -99,8 +99,8 @@ impl<Message> Program<Message> for MyProgram {
 
         for i in 0..BOARD_SIZE {
             let my_text = canvas::Text {
-                content: (i + 1).to_string(),
-                position: Point::new(200.0 + INCREMENT * (i as f32), 25.0),
+                content: char::from_u32(i + 65).unwrap().to_string(),
+                position: Point::new(206.0 + INCREMENT * (i as f32), 25.0),
                 color: Color::BLACK,
                 size: Pixels(16.0),
                 ..canvas::Text::default() // 3. Use default fallback values
