@@ -1,7 +1,7 @@
 use iced::{
-    Alignment, Color, Length, Point, Rectangle, Renderer, Theme, Vector, mouse,
+    Alignment, Color, Length, Pixels, Point, Rectangle, Renderer, Theme, Vector, mouse,
     widget::{
-        Canvas,
+        Canvas, canvas,
         canvas::{Frame, Geometry, Path, Program, Stroke},
         column,
     },
@@ -85,12 +85,9 @@ impl<Message> Program<Message> for MyProgram {
         let start_x: f32 = 212.0;
         let start_y: f32 = 75.0;
 
-        const BLACK: Color = Color::from_rgb(0.0, 0.0, 0.0);
-        const WHITE: Color = Color::from_rgb(1.0, 1.0, 1.0);
-
         for i in (0..BOARD_SIZE).step_by(2) {
             for j in (0..BOARD_SIZE).step_by(3) {
-                let color: Color = { if i < 10 { WHITE } else { BLACK } };
+                let color: Color = { if i < 10 { Color::WHITE } else { Color::BLACK } };
 
                 let pos: Point = Point::new(
                     start_x + INCREMENT * (i as f32),
@@ -99,6 +96,20 @@ impl<Message> Program<Message> for MyProgram {
                 frame.fill(&Path::circle(pos, PIECE_RADIUS), color);
             }
         }
+
+        for i in 0..BOARD_SIZE {
+            let my_text = canvas::Text {
+                content: (i + 1).to_string(),
+                position: Point::new(200.0 + INCREMENT * (i as f32), 25.0),
+                color: Color::BLACK,
+                size: Pixels(16.0),
+                ..canvas::Text::default() // 3. Use default fallback values
+            };
+            frame.fill_text(my_text);
+        }
+
+        // 3. Commit the text configuration directly into the frame layer
+
         vec![frame.into_geometry()]
     }
 }
