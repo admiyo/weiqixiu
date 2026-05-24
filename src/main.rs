@@ -108,6 +108,17 @@ impl<Message> Program<Message> for MyProgram {
             frame.fill_text(my_text);
         }
 
+        for i in 0..BOARD_SIZE {
+            let my_text = canvas::Text {
+                content: (i + 1).to_string(),
+                position: Point::new(170.0, 65.0 + INCREMENT * (i as f32)),
+                color: Color::BLACK,
+                size: Pixels(16.0),
+                ..canvas::Text::default() // 3. Use default fallback values
+            };
+            frame.fill_text(my_text);
+        }
+
         // 3. Commit the text configuration directly into the frame layer
 
         vec![frame.into_geometry()]
