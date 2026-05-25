@@ -97,7 +97,7 @@ impl<Message> Program<Message> for MyProgram {
 
         for i in 0..BOARD_SIZE {
             let my_text = canvas::Text {
-                content: char::from_u32(i + 65).unwrap().to_string(),
+                content: char::from_u32(i + 'a' as u32).unwrap().to_string(),
                 position: Point::new(206.0 + INCREMENT * (i as f32), 25.0),
                 color: Color::BLACK,
                 size: Pixels(16.0),
@@ -108,7 +108,7 @@ impl<Message> Program<Message> for MyProgram {
 
         for i in 0..BOARD_SIZE {
             let my_text = canvas::Text {
-                content: (i + 1).to_string(),
+                content: (19 - i).to_string(),
                 position: Point::new(170.0, 65.0 + INCREMENT * (i as f32)),
                 color: Color::BLACK,
                 size: Pixels(16.0),
