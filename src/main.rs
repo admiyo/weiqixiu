@@ -128,19 +128,19 @@ fn pos_to_point(row: char, col: char) -> Point {
     let start_y: f32 = 75.0;
     let base = 'a' as u32;
 
-    let y: f32 = {
+    let x: f32 = {
         if row < 'a' || row > 'z' {
             0.0
         } else {
-            INCREMENT * (row as u32 - base) as f32 + start_y
+            INCREMENT * (row as u32 - base) as f32 + start_x
         }
     };
 
-    let x: f32 = {
+    let y: f32 = {
         if col < 'a' || col > 'z' {
             0.0
         } else {
-            INCREMENT * (col as u32 - base) as f32 + start_x
+            INCREMENT * (col as u32 - base) as f32 + start_y
         }
     };
     Point::new(x, y)
