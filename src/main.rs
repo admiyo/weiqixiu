@@ -1,3 +1,4 @@
+use array2d::{Array2D, Error};
 use iced::{
     Alignment, Color, Length, Pixels, Point, Rectangle, Renderer, Theme, Vector, mouse,
     widget::{
@@ -6,6 +7,12 @@ use iced::{
         column,
     },
 };
+use std::fmt;
+
+const BOARD_SPAN: f32 = 300.0;
+const BOARD_SIZE: usize = 19;
+const PIECE_RADIUS: f32 = BOARD_SPAN / ((BOARD_SIZE as f32) - 1.0);
+const INCREMENT: f32 = BOARD_SPAN / ((BOARD_SIZE as f32) - 1.0) * 2.0;
 
 fn main() -> iced::Result {
     iced::run(WeiQiXiu::update, WeiQiXiu::view)
@@ -14,8 +21,52 @@ fn main() -> iced::Result {
 #[derive(Clone, Debug)]
 enum Message {}
 
-#[derive(Default)]
-struct WeiQiXiu;
+#[derive(Clone, Debug, Default, PartialEq)]
+enum Piece {
+    #[default]
+    NONE,
+    BLACK,
+    WHITE,
+}
+
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let c: char = {
+            match *self {
+                Piece::NONE => '┼',
+                Piece::WHITE => '●',
+                Piece::BLACK => '○',
+            }
+        };
+        write!(f, "{}", c)
+    }
+}
+
+/*#[derive(Default)]*/
+struct WeiQiXiu {
+    board: Array2D<Piece>,
+}
+
+impl Default for WeiQiXiu {
+    fn default() -> Self {
+        let mut board = Array2D::filled_with(Piece::NONE, BOARD_SIZE as usize, BOARD_SIZE as usize);
+        for next_move in &MOVES {
+            let base = 'a' as u32;
+            let y: usize = (next_move.1 as u32 - base) as usize;
+            let x: usize = (next_move.2 as u32 - base) as usize;
+            let piece: Piece = {
+                if next_move.0 == 'W' {
+                    Piece::WHITE
+                } else {
+                    Piece::BLACK
+                }
+            };
+            board[(x, y)] = piece;
+        }
+
+        WeiQiXiu { board: board }
+    }
+}
 
 impl WeiQiXiu {
     fn update(&mut self, _message: Message) {}
@@ -23,7 +74,7 @@ impl WeiQiXiu {
     fn view(&self) -> iced::Element<'_, Message> {
         column![
             "围戏锈",
-            Canvas::new(MyProgram)
+            Canvas::new(WeiQiProgram)
                 .width(Length::Fill)
                 .height(Length::Fill)
         ]
@@ -32,19 +83,14 @@ impl WeiQiXiu {
     }
 }
 
-const BOARD_SPAN: f32 = 300.0;
-const BOARD_SIZE: u32 = 19;
-const PIECE_RADIUS: f32 = BOARD_SPAN / ((BOARD_SIZE as f32) - 1.0);
-const INCREMENT: f32 = BOARD_SPAN / ((BOARD_SIZE as f32) - 1.0) * 2.0;
+struct WeiQiProgram;
 
-struct MyProgram;
-
-impl<Message> Program<Message> for MyProgram {
-    type State = ();
+impl<Message> Program<Message> for WeiQiProgram {
+    type State = WeiQiXiu;
 
     fn draw(
         &self,
-        _state: &Self::State,
+        state: &Self::State,
         renderer: &Renderer,
         _theme: &Theme,
         bounds: Rectangle,
@@ -83,19 +129,27 @@ impl<Message> Program<Message> for MyProgram {
             );
         }
 
-        for next_move in &MOVES {
-            let color: Color = {
-                if next_move.0 == 'W' {
-                    Color::WHITE
-                } else {
-                    Color::BLACK
+        for (y, row_iter) in state.board.rows_iter().enumerate() {
+            for (x, element) in row_iter.enumerate() {
+                print!("{} ", element);
+                if *element == Piece::NONE {
+                    continue;
                 }
-            };
-            let pos: Point = pos_to_point(next_move.1, next_move.2);
-            frame.fill(&Path::circle(pos, PIECE_RADIUS), color);
+
+                let color: Color = {
+                    if *element == Piece::WHITE {
+                        Color::WHITE
+                    } else {
+                        Color::BLACK
+                    }
+                };
+                let pos: Point = pos_to_point(x, y);
+                frame.fill(&Path::circle(pos, PIECE_RADIUS), color);
+            }
+            println!();
         }
 
-        for i in 0..BOARD_SIZE {
+        for i in 0..(BOARD_SIZE as u32) {
             let my_text = canvas::Text {
                 content: char::from_u32(i + 'a' as u32).unwrap().to_string(),
                 position: Point::new(206.0 + INCREMENT * (i as f32), 25.0),
@@ -106,7 +160,7 @@ impl<Message> Program<Message> for MyProgram {
             frame.fill_text(my_text);
         }
 
-        for i in 0..BOARD_SIZE {
+        for i in 0..BOARD_SIZE as u32 {
             let my_text = canvas::Text {
                 content: (19 - i).to_string(),
                 position: Point::new(170.0, 65.0 + INCREMENT * (i as f32)),
@@ -123,24 +177,23 @@ impl<Message> Program<Message> for MyProgram {
     }
 }
 
-fn pos_to_point(row: char, col: char) -> Point {
+fn pos_to_point(row: usize, col: usize) -> Point {
     let start_x: f32 = 212.0;
     let start_y: f32 = 75.0;
-    let base = 'a' as u32;
 
     let x: f32 = {
-        if row < 'a' || row > 'z' {
+        if row > BOARD_SIZE {
             0.0
         } else {
-            INCREMENT * (row as u32 - base) as f32 + start_x
+            INCREMENT * (row as u32) as f32 + start_x
         }
     };
 
     let y: f32 = {
-        if col < 'a' || col > 'z' {
+        if col > BOARD_SIZE {
             0.0
         } else {
-            INCREMENT * (col as u32 - base) as f32 + start_y
+            INCREMENT * (col as u32) as f32 + start_y
         }
     };
     Point::new(x, y)
