@@ -1,4 +1,4 @@
-use array2d::{Array2D, Error};
+use array2d::Array2D;
 use iced::{
     Alignment, Color, Length, Pixels, Point, Rectangle, Renderer, Theme, Vector, mouse,
     widget::{
