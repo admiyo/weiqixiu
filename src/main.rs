@@ -7,6 +7,7 @@ use iced::{
         column,
     },
 };
+use std::collections::HashSet;
 use std::fmt;
 
 const BOARD_SPAN: f32 = 300.0;
@@ -21,12 +22,23 @@ fn main() -> iced::Result {
 #[derive(Clone, Debug)]
 enum Message {}
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 enum Piece {
     #[default]
     NONE,
     BLACK,
     WHITE,
+}
+
+fn opposite(piece_1: Piece, piece_2: Piece) -> bool {
+    let mut val: bool = true;
+    if piece_1 == Piece::NONE || piece_2 == Piece::NONE {
+        val = false;
+    }
+    if piece_1 == piece_2 {
+        val = false;
+    }
+    val
 }
 
 impl From<char> for Piece {
@@ -70,8 +82,67 @@ impl fmt::Display for WeiQiXiu {
 }
 
 impl WeiQiXiu {
+    fn _check_group(&mut self, piece: Piece, x: usize, y: usize) -> HashSet<(usize, usize)> {
+        let mut check_stack: Vec<(usize, usize)> = Vec::new();
+        let mut capture_set: HashSet<(usize, usize)> = HashSet::new();
+        let mut liberties = 0;
+
+        check_stack.push((x, y));
+        while !check_stack.is_empty() && liberties == 0 {
+            let current = check_stack.pop().unwrap();
+            for tan in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+                let x_c: i64 = current.0 as i64 + tan.0;
+                let y_c: i64 = current.1 as i64 + tan.1;
+                if x_c >= 0 && y_c >= 0 && x_c < BOARD_SIZE as i64 || y_c < BOARD_SIZE as i64 {
+                    let test_space = (x_c as usize, y_c as usize);
+
+                    if self.board[test_space] == piece {
+                        if !capture_set.contains(&test_space) {
+                            check_stack.push(test_space)
+                        }
+                    } else if self.board[test_space] == Piece::NONE {
+                        liberties += 1;
+                        break;
+                    }
+                }
+            }
+            if liberties == 0 {
+                capture_set.insert(current);
+            }
+        }
+        if liberties > 0 {
+            println!("clearing");
+            capture_set.clear();
+        }
+
+        capture_set
+    }
+
     fn add_piece(&mut self, piece: Piece, x: usize, y: usize) {
         self.board[(x, y)] = piece;
+        for tan in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+            let x_c: i64 = x as i64 + tan.0;
+            let y_c: i64 = y as i64 + tan.1;
+            if x_c >= 0 && y_c >= 0 && x_c < BOARD_SIZE as i64 || y_c < BOARD_SIZE as i64 {
+                let current = (x_c as usize, y_c as usize);
+                if opposite(self.board[current], piece) {
+                    //TODO return the group from this function and remove all pieces in it from board
+                    let capture_group: HashSet<(usize, usize)> =
+                        self._check_group(self.board[current], current.0, current.1);
+
+                    if capture_group.len() > 0 {
+                        println!("removing");
+                    }
+
+                    for i in capture_group.iter() {
+                        self.board[*i] = Piece::NONE;
+                    }
+                }
+            }
+        }
+	//TODO look for suicide moves
+        //TODO detect  Ko
+        println!("{}", self);
     }
 }
 
@@ -85,7 +156,11 @@ impl Default for WeiQiXiu {
             board: Array2D::filled_with(Piece::NONE, BOARD_SIZE as usize, BOARD_SIZE as usize),
         };
         for next_move in &MOVES {
-            wei_qi_xiu.add_piece(Piece::from(next_move.0),  pos_from_char(next_move.2),  pos_from_char(next_move.1) );
+            wei_qi_xiu.add_piece(
+                Piece::from(next_move.0),
+                pos_from_char(next_move.2),
+                pos_from_char(next_move.1),
+            );
         }
         wei_qi_xiu
     }
@@ -151,8 +226,6 @@ impl<Message> Program<Message> for WeiQiProgram {
                 },
             );
         }
-
-        println!("{}", state);
 
         for (y, row_iter) in state.board.rows_iter().enumerate() {
             for (x, element) in row_iter.enumerate() {
@@ -221,6 +294,14 @@ fn pos_to_point(row: usize, col: usize) -> Point {
     };
     Point::new(x, y)
 }
+
+const MOVES_1: [(char, char, char); 5] = [
+    ('B', 'j', 'd'),
+    ('W', 'j', 'e'),
+    ('B', 'k', 'e'),
+    ('B', 'i', 'e'),
+    ('B', 'j', 'f'),
+];
 
 const MOVES: [(char, char, char); 132] = [
     ('B', 'p', 'p'),
