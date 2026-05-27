@@ -29,6 +29,16 @@ enum Piece {
     WHITE,
 }
 
+impl From<char> for Piece {
+    fn from(c: char) -> Piece {
+        match c {
+            'B' => Piece::BLACK,
+            'W' => Piece::WHITE,
+            _ => Piece::NONE,
+        }
+    }
+}
+
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let c: char = {
@@ -59,23 +69,25 @@ impl fmt::Display for WeiQiXiu {
     }
 }
 
+impl WeiQiXiu {
+    fn add_piece(&mut self, piece: Piece, x: usize, y: usize) {
+        self.board[(x, y)] = piece;
+    }
+}
+
+fn pos_from_char(c: char) -> usize {
+    (c as u32 - 'a' as u32) as usize
+}
+
 impl Default for WeiQiXiu {
     fn default() -> Self {
-        let mut board = Array2D::filled_with(Piece::NONE, BOARD_SIZE as usize, BOARD_SIZE as usize);
+        let mut wei_qi_xiu = WeiQiXiu {
+            board: Array2D::filled_with(Piece::NONE, BOARD_SIZE as usize, BOARD_SIZE as usize),
+        };
         for next_move in &MOVES {
-            let base = 'a' as u32;
-            let y: usize = (next_move.1 as u32 - base) as usize;
-            let x: usize = (next_move.2 as u32 - base) as usize;
-            let piece: Piece = {
-                if next_move.0 == 'W' {
-                    Piece::WHITE
-                } else {
-                    Piece::BLACK
-                }
-            };
-            board[(x, y)] = piece;
+            wei_qi_xiu.add_piece(Piece::from(next_move.0),  pos_from_char(next_move.2),  pos_from_char(next_move.1) );
         }
-        WeiQiXiu { board: board }
+        wei_qi_xiu
     }
 }
 
