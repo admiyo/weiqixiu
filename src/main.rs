@@ -47,6 +47,18 @@ struct WeiQiXiu {
     board: Array2D<Piece>,
 }
 
+impl fmt::Display for WeiQiXiu {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for row_iter in self.board.rows_iter() {
+            for element in row_iter {
+                write!(f, "{} ", element).ok();
+            }
+            writeln!(f).ok();
+        }
+        Ok(())
+    }
+}
+
 impl Default for WeiQiXiu {
     fn default() -> Self {
         let mut board = Array2D::filled_with(Piece::NONE, BOARD_SIZE as usize, BOARD_SIZE as usize);
@@ -63,7 +75,6 @@ impl Default for WeiQiXiu {
             };
             board[(x, y)] = piece;
         }
-
         WeiQiXiu { board: board }
     }
 }
@@ -129,9 +140,10 @@ impl<Message> Program<Message> for WeiQiProgram {
             );
         }
 
+        println!("{}", state);
+
         for (y, row_iter) in state.board.rows_iter().enumerate() {
             for (x, element) in row_iter.enumerate() {
-                print!("{} ", element);
                 if *element == Piece::NONE {
                     continue;
                 }
@@ -146,7 +158,6 @@ impl<Message> Program<Message> for WeiQiProgram {
                 let pos: Point = pos_to_point(x, y);
                 frame.fill(&Path::circle(pos, PIECE_RADIUS), color);
             }
-            println!();
         }
 
         for i in 0..(BOARD_SIZE as u32) {
