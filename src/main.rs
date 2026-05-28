@@ -140,7 +140,7 @@ impl WeiQiXiu {
                 }
             }
         }
-	//TODO look for suicide moves
+        //TODO look for suicide moves
         //TODO detect  Ko
         println!("{}", self);
     }
@@ -227,6 +227,9 @@ impl<Message> Program<Message> for WeiQiProgram {
             );
         }
 
+        let start_x: f32 = frame.center().x - BOARD_SPAN;
+        let start_y: f32 = frame.center().y - BOARD_SPAN;
+
         for (y, row_iter) in state.board.rows_iter().enumerate() {
             for (x, element) in row_iter.enumerate() {
                 if *element == Piece::NONE {
@@ -240,7 +243,7 @@ impl<Message> Program<Message> for WeiQiProgram {
                         Color::BLACK
                     }
                 };
-                let pos: Point = pos_to_point(x, y);
+                let pos: Point = pos_to_point(start_x, start_y, x, y);
                 frame.fill(&Path::circle(pos, PIECE_RADIUS), color);
             }
         }
@@ -248,7 +251,7 @@ impl<Message> Program<Message> for WeiQiProgram {
         for i in 0..(BOARD_SIZE as u32) {
             let my_text = canvas::Text {
                 content: char::from_u32(i + 'a' as u32).unwrap().to_string(),
-                position: Point::new(206.0 + INCREMENT * (i as f32), 25.0),
+                position: Point::new(start_x + INCREMENT * (i as f32), start_y - INCREMENT),
                 color: Color::BLACK,
                 size: Pixels(16.0),
                 ..canvas::Text::default() // 3. Use default fallback values
@@ -259,7 +262,10 @@ impl<Message> Program<Message> for WeiQiProgram {
         for i in 0..BOARD_SIZE as u32 {
             let my_text = canvas::Text {
                 content: (19 - i).to_string(),
-                position: Point::new(170.0, 65.0 + INCREMENT * (i as f32)),
+                position: Point::new(
+                    start_x - INCREMENT,
+                    (start_y - INCREMENT / 4.0) + INCREMENT * (i as f32),
+                ),
                 color: Color::BLACK,
                 size: Pixels(16.0),
                 ..canvas::Text::default() // 3. Use default fallback values
@@ -273,10 +279,7 @@ impl<Message> Program<Message> for WeiQiProgram {
     }
 }
 
-fn pos_to_point(row: usize, col: usize) -> Point {
-    let start_x: f32 = 212.0;
-    let start_y: f32 = 75.0;
-
+fn pos_to_point(start_x: f32, start_y: f32, row: usize, col: usize) -> Point {
     let x: f32 = {
         if row > BOARD_SIZE {
             0.0
