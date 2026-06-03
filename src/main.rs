@@ -23,8 +23,8 @@ fn main() -> iced::Result {
 
 #[derive(Clone, Debug)]
 enum Message {
-    MouseMoved(iced::Point),
-    MouseClick(iced::Point),
+    MouseMoved,
+    MouseClick,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -148,18 +148,17 @@ impl WeiQiXiu {
         }
         //TODO look for suicide moves
         //TODO detect  Ko
-        // println!("{}", self);
     }
 
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::MouseClick(_point) => Task::done(window::Action::RedrawAll).discard(),
-            Message::MouseMoved(_point) => Task::none(),
+            Message::MouseClick => Task::done(window::Action::RedrawAll).discard(),
+            Message::MouseMoved => Task::none(),
         }
     }
 
     fn view(&self) -> iced::Element<'_, Message> {
-	let col=column![
+        let col = column![
             "围戏锈",
             Canvas::new(WeiQiProgram)
                 .width(Length::Fill)
@@ -167,7 +166,7 @@ impl WeiQiXiu {
         ]
         .align_x(Alignment::Center);
 
-	mouse_area(col).into()
+        mouse_area(col).on_press(Message::MouseClick).into()
     }
 }
 
@@ -210,7 +209,8 @@ impl<Message> Program<Message> for WeiQiProgram {
                 if let Some(position) = cursor.position_in(bounds) {
                     println!("x = {} y = {}", position.x, position.y);
 
-                    let start_x: f32 = bounds.x as f32 + ((bounds.width as f32) / 2.0) - BOARD_SPAN;
+                    let start_x: f32 =
+                        bounds.x as f32 + ((bounds.width as f32) / 2.0) - BOARD_SPAN - 1.0;
                     let start_y: f32 =
                         bounds.y as f32 + ((bounds.height as f32) / 2.0) - BOARD_SPAN;
 
@@ -345,7 +345,7 @@ fn pos_to_point(start_x: f32, start_y: f32, row: usize, col: usize) -> Point {
 
 fn point_to_pos(start_x: f32, start_y: f32, point_x: f32, point_y: f32) -> (usize, usize) {
     let y: usize = {
-        let p_x = (point_x - start_x) / INCREMENT;
+        let p_x = 0.5 + (point_x - start_x) / INCREMENT;
         if p_x < 0.0 {
             0
         } else if p_x > BOARD_SIZE as f32 {
@@ -355,7 +355,7 @@ fn point_to_pos(start_x: f32, start_y: f32, point_x: f32, point_y: f32) -> (usiz
         }
     };
     let x: usize = {
-        let p_y = (point_y - start_y) / INCREMENT;
+        let p_y = 1.0 + (point_y - start_y) / INCREMENT;
         if p_y <= 0.0 {
             0
         } else if p_y > BOARD_SIZE as f32 {
