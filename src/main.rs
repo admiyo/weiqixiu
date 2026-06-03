@@ -1,11 +1,13 @@
 use array2d::Array2D;
 use iced::{
-    Alignment, Color, Length, Pixels, Point, Rectangle, Renderer, Theme, Vector, mouse,
+    Alignment, Color, Event, Length, Pixels, Point, Rectangle, Renderer, Task, Theme, Vector,
+    mouse,
     widget::{
-        Canvas, canvas,
+        Action, Canvas, canvas,
         canvas::{Frame, Geometry, Path, Program, Stroke},
-        column,
+        column, mouse_area,
     },
+    window,
 };
 use std::collections::HashSet;
 use std::fmt;
@@ -20,7 +22,10 @@ fn main() -> iced::Result {
 }
 
 #[derive(Clone, Debug)]
-enum Message {}
+enum Message {
+    MouseMoved(iced::Point),
+    MouseClick(iced::Point),
+}
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 enum Piece {
@@ -67,6 +72,7 @@ impl fmt::Display for Piece {
 /*#[derive(Default)]*/
 struct WeiQiXiu {
     board: Array2D<Piece>,
+    last_piece: Piece,
 }
 
 impl fmt::Display for WeiQiXiu {
@@ -111,7 +117,6 @@ impl WeiQiXiu {
             }
         }
         if liberties > 0 {
-            println!("clearing");
             capture_set.clear();
         }
 
@@ -120,6 +125,7 @@ impl WeiQiXiu {
 
     fn add_piece(&mut self, piece: Piece, x: usize, y: usize) {
         self.board[(x, y)] = piece;
+        self.last_piece = piece;
         for tan in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
             let x_c: i64 = x as i64 + tan.0;
             let y_c: i64 = y as i64 + tan.1;
@@ -142,7 +148,26 @@ impl WeiQiXiu {
         }
         //TODO look for suicide moves
         //TODO detect  Ko
-        println!("{}", self);
+        // println!("{}", self);
+    }
+
+    fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::MouseClick(_point) => Task::done(window::Action::RedrawAll).discard(),
+            Message::MouseMoved(_point) => Task::none(),
+        }
+    }
+
+    fn view(&self) -> iced::Element<'_, Message> {
+	let col=column![
+            "围戏锈",
+            Canvas::new(WeiQiProgram)
+                .width(Length::Fill)
+                .height(Length::Fill)
+        ]
+        .align_x(Alignment::Center);
+
+	mouse_area(col).into()
     }
 }
 
@@ -152,8 +177,10 @@ fn pos_from_char(c: char) -> usize {
 
 impl Default for WeiQiXiu {
     fn default() -> Self {
+        println!("Default");
         let mut wei_qi_xiu = WeiQiXiu {
             board: Array2D::filled_with(Piece::NONE, BOARD_SIZE as usize, BOARD_SIZE as usize),
+            last_piece: Piece::WHITE,
         };
         for next_move in &MOVES {
             wei_qi_xiu.add_piece(
@@ -166,25 +193,43 @@ impl Default for WeiQiXiu {
     }
 }
 
-impl WeiQiXiu {
-    fn update(&mut self, _message: Message) {}
-
-    fn view(&self) -> iced::Element<'_, Message> {
-        column![
-            "围戏锈",
-            Canvas::new(WeiQiProgram)
-                .width(Length::Fill)
-                .height(Length::Fill)
-        ]
-        .align_x(Alignment::Center)
-        .into()
-    }
-}
-
 struct WeiQiProgram;
 
 impl<Message> Program<Message> for WeiQiProgram {
     type State = WeiQiXiu;
+
+    fn update(
+        &self,
+        state: &mut Self::State,
+        event: &Event,
+        bounds: Rectangle,
+        cursor: mouse::Cursor,
+    ) -> Option<Action<Message>> {
+        match event {
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
+                if let Some(position) = cursor.position_in(bounds) {
+                    println!("x = {} y = {}", position.x, position.y);
+
+                    let start_x: f32 = bounds.x as f32 + ((bounds.width as f32) / 2.0) - BOARD_SPAN;
+                    let start_y: f32 =
+                        bounds.y as f32 + ((bounds.height as f32) / 2.0) - BOARD_SPAN;
+
+                    state.last_piece = match state.last_piece {
+                        Piece::BLACK => Piece::WHITE,
+                        Piece::WHITE => Piece::BLACK,
+                        Piece::NONE => Piece::BLACK,
+                    };
+
+                    let next_move = point_to_pos(start_x, start_y, position.x, position.y);
+
+                    println!("adding piece at {} {} ", next_move.0, next_move.1);
+                    state.add_piece(state.last_piece, next_move.0, next_move.1);
+                }
+                None
+            }
+            _ => None,
+        }
+    }
 
     fn draw(
         &self,
@@ -296,6 +341,31 @@ fn pos_to_point(start_x: f32, start_y: f32, row: usize, col: usize) -> Point {
         }
     };
     Point::new(x, y)
+}
+
+fn point_to_pos(start_x: f32, start_y: f32, point_x: f32, point_y: f32) -> (usize, usize) {
+    let y: usize = {
+        let p_x = (point_x - start_x) / INCREMENT;
+        if p_x < 0.0 {
+            0
+        } else if p_x > BOARD_SIZE as f32 {
+            BOARD_SIZE
+        } else {
+            p_x as usize
+        }
+    };
+    let x: usize = {
+        let p_y = (point_y - start_y) / INCREMENT;
+        if p_y <= 0.0 {
+            0
+        } else if p_y > BOARD_SIZE as f32 {
+            BOARD_SIZE
+        } else {
+            p_y as usize
+        }
+    };
+
+    (x, y)
 }
 
 const MOVES_1: [(char, char, char); 5] = [
