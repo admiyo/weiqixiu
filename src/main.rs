@@ -99,9 +99,8 @@ impl WeiQiXiu {
             for tan in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
                 let x_c: i64 = current.0 as i64 + tan.0;
                 let y_c: i64 = current.1 as i64 + tan.1;
-                if x_c >= 0 && y_c >= 0 && x_c < BOARD_SIZE as i64 || y_c < BOARD_SIZE as i64 {
+                if x_c >= 0 && y_c >= 0 && x_c < BOARD_SIZE as i64 && y_c < BOARD_SIZE as i64 {
                     let test_space = (x_c as usize, y_c as usize);
-
                     if self.board[test_space] == piece {
                         if !capture_set.contains(&test_space) {
                             check_stack.push(test_space)
@@ -124,12 +123,17 @@ impl WeiQiXiu {
     }
 
     fn add_piece(&mut self, piece: Piece, x: usize, y: usize) {
+
+	if self.board[(x, y)] != Piece::NONE {
+		return
+	}
+
         self.board[(x, y)] = piece;
         self.last_piece = piece;
         for tan in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
             let x_c: i64 = x as i64 + tan.0;
             let y_c: i64 = y as i64 + tan.1;
-            if x_c >= 0 && y_c >= 0 && x_c < BOARD_SIZE as i64 || y_c < BOARD_SIZE as i64 {
+            if x_c >= 0 && y_c >= 0 && x_c < BOARD_SIZE as i64 && y_c < BOARD_SIZE as i64 {
                 let current = (x_c as usize, y_c as usize);
                 if opposite(self.board[current], piece) {
                     //TODO return the group from this function and remove all pieces in it from board
@@ -348,8 +352,8 @@ fn point_to_pos(start_x: f32, start_y: f32, point_x: f32, point_y: f32) -> (usiz
         let p_x = 0.5 + (point_x - start_x) / INCREMENT;
         if p_x < 0.0 {
             0
-        } else if p_x > BOARD_SIZE as f32 {
-            BOARD_SIZE
+        } else if p_x >= BOARD_SIZE as f32 {
+            BOARD_SIZE - 1
         } else {
             p_x as usize
         }
@@ -358,8 +362,8 @@ fn point_to_pos(start_x: f32, start_y: f32, point_x: f32, point_y: f32) -> (usiz
         let p_y = 1.0 + (point_y - start_y) / INCREMENT;
         if p_y <= 0.0 {
             0
-        } else if p_y > BOARD_SIZE as f32 {
-            BOARD_SIZE
+        } else if p_y >= BOARD_SIZE as f32 {
+            BOARD_SIZE - 1
         } else {
             p_y as usize
         }
